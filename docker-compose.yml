@@ -8,6 +8,26 @@ services:
     restart: always 
     links:
       - backend
+  db:
+    image: mysql:5.7
+    networks:
+      - backend
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=SensorInfo
+
+    ports:
+      - "3306:3306"
+    container_name: database-docker
+    restart: always
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:3306" ]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
   backend:
     build: ./backend
     ports:
@@ -24,22 +44,13 @@ services:
     volumes:
       - ./www/:/var/www/html/
     container_name: backend-docker
-    restart: always
+    restart: on-failure
     links:
       - db
-  db:
-    image: mysql:5.7
-    networks:
-      - backend
-    environment:
-    - MYSQL_DATABASE=SensorInfo
-    - MYSQL_ROOT_PASSWORD=root
-    ports:
-      - "3306:3306"
-
-    container_name: database-docker
-    restart: always
-
 networks:
   backend:
     driver: bridge
+
+volumes:
+  db-data:
+    driver: local 
